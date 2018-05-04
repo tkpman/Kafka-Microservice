@@ -19,10 +19,6 @@ namespace Order.Api.Application.Models
         public UpdatedOrderValidator()
         {
             RuleFor(x => x.Products)
-                .NotNull()
-                .WithMessage("Order has to contain at least one product.");
-
-            RuleFor(x => x.Products)
                 .Must(x => x != null && x.Any())
                 .WithMessage("Order has to contain at least one product.");
         }

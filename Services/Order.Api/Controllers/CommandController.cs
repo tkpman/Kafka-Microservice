@@ -7,6 +7,8 @@ using Order.Api.Application.Models;
 
 namespace Order.Api.Controllers
 {
+    [ApiVersion("1.0")]
+    [Produces("application/json")]
     [Route("api/[controller]")]
     public class CommandController : Controller
     {
@@ -26,7 +28,10 @@ namespace Order.Api.Controllers
         /// <param name="newOrder">Order to create / place.</param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<IActionResult> Create(NewOrder newOrder)
+        [ProducesResponseType(201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> Create([FromBody] NewOrder newOrder)
         {
             var command = new OrderCreateCommand(newOrder);
 
@@ -44,6 +49,9 @@ namespace Order.Api.Controllers
         /// <param name="orderId">Id of the order to remove.</param>
         /// <returns></returns>
         [HttpDelete]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
         public async Task<IActionResult> Remove(int orderId)
         {
             var command = new OrderRemoveCommand(orderId);
@@ -62,7 +70,10 @@ namespace Order.Api.Controllers
         /// <param name="updatedOrder">Order to update.</param>
         /// <returns></returns>
         [HttpPut]
-        public async Task<IActionResult> Update(UpdatedOrder updatedOrder)
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> Update([FromBody] UpdatedOrder updatedOrder)
         {
             var command = new OrderUpdateCommand(updatedOrder);
 
