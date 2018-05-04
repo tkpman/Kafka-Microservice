@@ -1,29 +1,26 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using FluentValidation;
 
 namespace Order.Api.Application.Models
 {
-    public class NewOrder
+    public class UpdatedOrder
     {
-        /// <summary>
-        /// Id of the customer which order the product.
-        /// </summary>
-        public int CustomerId { get; set; }
-
         /// <summary>
         /// List of products the user wants to order.
         /// </summary>
         public List<Product> Products { get; set; }
     }
 
-    public class NewOrderValidator
+    public class UpdatedOrderValidator
         : AbstractValidator<NewOrder>
     {
-        public NewOrderValidator()
+        public UpdatedOrderValidator()
         {
-            RuleFor(x => x.CustomerId)
-                .GreaterThan(0);
+            RuleFor(x => x.Products)
+                .NotNull()
+                .WithMessage("Order has to contain at least one product.");
 
             RuleFor(x => x.Products)
                 .Must(x => x != null && x.Any())
