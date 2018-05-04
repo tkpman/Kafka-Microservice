@@ -4,23 +4,26 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using Order.Api.Application.Commands;
 using UnitOfWorks.Abstractions;
 
 namespace Product.Api.Commands
 {
-    public class GetProductCommand : IRequest<Application.Models.Product>
+    public class GetProductCommand : IRequest<ICommandResult<Application.Models.Product>>
     {
-        public GetProductCommand(Application.Models.Product product)
+        public GetProductCommand(int id)
         {
-            if(product == null)
-                throw new ArgumentNullException(nameof(product));
+            if(id < 0)
+                throw new ArgumentOutOfRangeException(nameof(id));
 
-            this.Product = product;
+            this.Id = id;
         }
-        public Application.Models.Product Product { get; set; }
+        public int Id { get; set; }
     }
 
-    public class GetPruductCommandHndler : IRequestHandler<GetProductCommand, Application.Models.Product>
+    public class GetPruductCommandHndler : 
+        IRequestHandler<GetProductCommand, 
+        ICommandResult<Application.Models.Product>>
     {
         //private readonly IUnitOfWork _UnitOfWork;
 
@@ -32,9 +35,19 @@ namespace Product.Api.Commands
         //    this._UnitOfWork = unitOfWork;
         //}
 
-        public Task<Application.Models.Product> Handle(GetProductCommand request, CancellationToken cancellationToken)
+        public async Task<ICommandResult<Application.Models.Product>> Handle(
+            GetProductCommand request, 
+            CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            Application.Models.Product product = new Application.Models.Product();
+
+            product.Description = "Test Discription";
+            product.Amount = 99999;
+            product.Id = 0;
+            product.Name = "Test product";
+            product.Price = 99999;
+
+            return CommandResult<Application.Models.Product>.Success(product);
         }
     }
 }
