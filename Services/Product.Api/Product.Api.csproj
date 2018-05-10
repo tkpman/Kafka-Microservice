@@ -4,6 +4,11 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\netcoreapp2.0\Product.Api.xml</DocumentationFile>
+    <NoWarn>1701;1702;1705;1591</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <Folder Include="Application\Infrastructure\" />
     <Folder Include="wwwroot\" />
@@ -13,7 +18,9 @@
     <PackageReference Include="MediatR" Version="4.1.0" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="4.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="2.2.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.0.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="2.4.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +30,12 @@
   <ItemGroup>
     <ProjectReference Include="..\Shared\UnitOfWorks\UnitOfWorks.Abstractions\UnitOfWorks.Abstractions.csproj" />
     <ProjectReference Include="..\Shared\UnitOfWorks\UnitOfWorks.EntityFrameworkCore\UnitOfWorks.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="FluentValidation">
+      <HintPath>..\..\..\..\..\.nuget\packages\fluentvalidation\7.5.2\lib\netstandard2.0\FluentValidation.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
