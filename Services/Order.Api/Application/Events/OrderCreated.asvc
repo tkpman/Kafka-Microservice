@@ -2,14 +2,14 @@
  "type": "record",
  "name": "OrderCreated",
  "fields": [
-     {"name": "id", "type": "int"},
+     {"name": "id", "type": "string"},
      {"name": "customerId",  "type": "int"},
      {"name": "date", "type": "string"},
      {"name": "products", "type": {"type" : "array", "items": {
          "name" : "OrderProduct",
          "type" : "record",
          "fields" : [
-             {"name" : "id",  "type": "int"},
+             {"name" : "id",  "type": "string"},
              {"name" : "Quantity",  "type": "int"},
          ]
      }}}

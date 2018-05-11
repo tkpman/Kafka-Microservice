@@ -16,8 +16,8 @@ namespace Order.Api.Application.Events
 	public partial class OrderProduct : ISpecificRecord
 	{
 		public static Schema _SCHEMA = Schema.Parse("{\"type\":\"record\",\"name\":\"OrderProduct\",\"namespace\":\"Order.Api.Application.Events\"" +
-				",\"fields\":[{\"name\":\"id\",\"type\":\"int\"},{\"name\":\"Quantity\",\"type\":\"int\"}]}");
-		private int _id;
+				",\"fields\":[{\"name\":\"id\",\"type\":\"string\"},{\"name\":\"Quantity\",\"type\":\"int\"}]}");
+		private string _id;
 		private int _Quantity;
 		public virtual Schema Schema
 		{
@@ -26,7 +26,7 @@ namespace Order.Api.Application.Events
 				return OrderProduct._SCHEMA;
 			}
 		}
-		public int id
+		public string id
 		{
 			get
 			{
@@ -61,7 +61,7 @@ namespace Order.Api.Application.Events
 		{
 			switch (fieldPos)
 			{
-			case 0: this.id = (System.Int32)fieldValue; break;
+			case 0: this.id = (System.String)fieldValue; break;
 			case 1: this.Quantity = (System.Int32)fieldValue; break;
 			default: throw new AvroRuntimeException("Bad index " + fieldPos + " in Put()");
 			};

@@ -10,7 +10,7 @@ namespace Order.Api.Application.Models
         /// <summary>
         /// Id of the proudct.
         /// </summary>
-        public int Id { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
         /// Quantity of the product.
