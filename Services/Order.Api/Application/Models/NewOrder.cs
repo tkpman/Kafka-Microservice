@@ -9,7 +9,7 @@ namespace Order.Api.Application.Models
         /// <summary>
         /// Id of the customer which order the product.
         /// </summary>
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
 
         /// <summary>
         /// List of products the user wants to order.
@@ -23,7 +23,7 @@ namespace Order.Api.Application.Models
         public NewOrderValidator()
         {
             RuleFor(x => x.CustomerId)
-                .GreaterThan(0);
+                .NotEmpty();
 
             RuleFor(x => x.Products)
                 .Must(x => x != null && x.Any())

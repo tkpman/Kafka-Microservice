@@ -3,7 +3,7 @@
  "name": "OrderCreated",
  "fields": [
      {"name": "id", "type": "string"},
-     {"name": "customerId",  "type": "int"},
+     {"name": "customerId",  "type": "string"},
      {"name": "date", "type": "string"},
      {"name": "products", "type": {"type" : "array", "items": {
          "name" : "OrderProduct",

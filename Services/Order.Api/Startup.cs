@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.PlatformAbstractions;
+using Order.Api.Application.Orchestra;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace Order.Api
@@ -24,6 +26,8 @@ namespace Order.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IHostedService, OrderOrchestraService>();
+
             services.AddMvcCore()
                 // Add Api Explorer, so Swagger can find the API versioning in
                 // the controller / actions.
@@ -65,8 +69,8 @@ namespace Order.Api
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(
-            IApplicationBuilder app, 
-            IHostingEnvironment env, 
+            IApplicationBuilder app,
+            IHostingEnvironment env,
             IApiVersionDescriptionProvider provider)
         {
             if (env.IsDevelopment())

@@ -15,9 +15,9 @@ namespace Order.Api.Application.Events
 	
 	public partial class OrderCreated : ISpecificRecord
 	{
-		public static Schema _SCHEMA = Schema.Parse(@"{""type"":""record"",""name"":""OrderCreated"",""namespace"":""Order.Api.Application.Events"",""fields"":[{""name"":""id"",""type"":""string""},{""name"":""customerId"",""type"":""int""},{""name"":""date"",""type"":""string""},{""name"":""products"",""type"":{""type"":""array"",""items"":{""type"":""record"",""name"":""OrderProduct"",""namespace"":""Order.Api.Application.Events"",""fields"":[{""name"":""id"",""type"":""string""},{""name"":""Quantity"",""type"":""int""}]}}}]}");
+		public static Schema _SCHEMA = Schema.Parse(@"{""type"":""record"",""name"":""OrderCreated"",""namespace"":""Order.Api.Application.Events"",""fields"":[{""name"":""id"",""type"":""string""},{""name"":""customerId"",""type"":""string""},{""name"":""date"",""type"":""string""},{""name"":""products"",""type"":{""type"":""array"",""items"":{""type"":""record"",""name"":""OrderProduct"",""namespace"":""Order.Api.Application.Events"",""fields"":[{""name"":""id"",""type"":""string""},{""name"":""Quantity"",""type"":""int""}]}}}]}");
 		private string _id;
-		private int _customerId;
+		private string _customerId;
 		private string _date;
 		private IList<Order.Api.Application.Events.OrderProduct> _products;
 		public virtual Schema Schema
@@ -38,7 +38,7 @@ namespace Order.Api.Application.Events
 				this._id = value;
 			}
 		}
-		public int customerId
+		public string customerId
 		{
 			get
 			{
@@ -87,7 +87,7 @@ namespace Order.Api.Application.Events
 			switch (fieldPos)
 			{
 			case 0: this.id = (System.String)fieldValue; break;
-			case 1: this.customerId = (System.Int32)fieldValue; break;
+			case 1: this.customerId = (System.String)fieldValue; break;
 			case 2: this.date = (System.String)fieldValue; break;
 			case 3: this.products = (IList<Order.Api.Application.Events.OrderProduct>)fieldValue; break;
 			default: throw new AvroRuntimeException("Bad index " + fieldPos + " in Put()");
