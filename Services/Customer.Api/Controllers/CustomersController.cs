@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Customer.Api.Controllers
 {
+    [ApiVersion("1.0")]
     [Produces("application/json")]
     [Route("api/Customers")]
     public class CustomersController : Controller
@@ -24,40 +25,14 @@ namespace Customer.Api.Controllers
         }
 
         /// <summary>
-        /// Gets a specific Customer by id.
+        /// Creates a Customer.
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="customer"></param>
         /// <returns></returns>
-        [HttpGet("{id}")]
-        public IActionResult GetCustomer(int id)
-        {
-            if (id < 0)
-                throw new ArgumentOutOfRangeException(nameof(id));
-
-            var command = new CustomerGetCommand(id);
-            var result = this._mediator.Send(command);
-
-            if (result != null)
-                return new OkObjectResult(result);
-
-            return new BadRequestResult();
-        }
-
-        // Get Request for List of all Customers.
-        [HttpGet]
-        public IActionResult GetAllCustomers()
-        {
-            var command = new CustomerAllCommand();
-            var result = this._mediator.Send(command);
-
-            if (result != null)
-                return new OkObjectResult(result);
-
-            return new BadRequestResult();
-        }
-
-        // Creates a new Customer.
         [HttpPost]
+        [ProducesResponseType(201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
         public IActionResult CreateCustomer([FromBody] Application.Models.Customer customer)
         {
             if (customer == null)
@@ -72,8 +47,15 @@ namespace Customer.Api.Controllers
             return new BadRequestResult();
         }
 
-        // Updates a Customer.
+        /// <summary>
+        /// Updates a Customer.
+        /// </summary>
+        /// <param name="customer"></param>
+        /// <returns></returns>
         [HttpPut]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
         public IActionResult UpdateCustomer([FromBody] Application.Models.Customer customer)
         {
             if (customer == null)
@@ -88,8 +70,15 @@ namespace Customer.Api.Controllers
             return new BadRequestResult();
         }
 
-        // Deletes a Customer by specified id.
+        /// <summary>
+        /// Deletes a Customer by specified id.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id}")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
         public IActionResult DeleteCustomer(int id)
         {
             if (id < 0)

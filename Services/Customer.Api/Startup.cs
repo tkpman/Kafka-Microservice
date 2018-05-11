@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.IO;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.PlatformAbstractions;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace Customer.Api
@@ -25,36 +22,71 @@ namespace Customer.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMvcCore()
+                // Add Api Explorer, so Swagger can find the API versioning in
+                // the controller / actions.
+                .AddVersionedApiExplorer(o => o.GroupNameFormat = "'v'VVV");
+
             services.AddMvc();
 
-            // Register the Swagger generator, defining one or more Swagger documents
+            // MediatR
+            services.AddMediatR(typeof(Startup));
+
+            // Add Api Versioning to the project.
+            services.AddApiVersioning();
+
+            // Add swagger documentation.
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "Customer API", Version = "v1" });
+                var provider = services.BuildServiceProvider()
+                    .GetRequiredService<IApiVersionDescriptionProvider>();
+
+                foreach (var description in provider.ApiVersionDescriptions)
+                {
+                    c.SwaggerDoc(
+                        description.GroupName,
+                        new Info()
+                        {
+                            Title = $"Customer API {description.ApiVersion}",
+                            Version = description.ApiVersion.ToString()
+                        });
+                }
+
+                var filePath = Path.Combine(
+                    PlatformServices.Default.Application.ApplicationBasePath,
+                    "Customer.Api.xml");
+
+                c.IncludeXmlComments(filePath);
             });
 
-            // MediatR
-            services.AddMediatR();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApiVersionDescriptionProvider provider)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
-            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseMvc();
+
+            // Add Swagger.
             app.UseSwagger();
 
-            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Customer API V1");
-            });
+            // Add Swagger UI.
+            app.UseSwaggerUI(
+                options =>
+                {
+                    foreach (var description in provider.ApiVersionDescriptions)
+                    {
+                        options.SwaggerEndpoint(
+                            $"/swagger/{description.GroupName}/swagger.json",
+                            description.GroupName.ToUpperInvariant());
+                    }
+                });
 
-            app.UseMvc();
         }
     }
 }
