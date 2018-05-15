@@ -2,13 +2,14 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Order.Api.Application.Orchestra.Infrastructure;
 
 namespace Order.Api.Application.Orchestra
 {
-    public class OrderOrchestraServiceBeta
+    public class OrderOrchestraService
         : JobHostingService
     {
-        public OrderOrchestraServiceBeta(IServiceProvider serviceProvider)
+        public OrderOrchestraService(IServiceProvider serviceProvider)
             : base(serviceProvider)
         {
             this.AddJob(new Jobs.OrderCreatedJob(

@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.PlatformAbstractions;
 using Order.Api.Application.Orchestra;
+using Order.Api.Application.Orchestra.Infrastructure;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace Order.Api

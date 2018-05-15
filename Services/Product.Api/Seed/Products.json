@@ -1,0 +1,38 @@
+﻿[
+  {
+    "ProductId": "1",
+    "Name": "Dell Computer",
+    "Price": 8000,
+    "Quantity": 7
+  },
+  {
+    "ProductId": "2",
+    "Name": "Lenovo Computer",
+    "Price": 7000,
+    "Quantity": 20
+  },
+  {
+    "ProductId": "3",
+    "Name": "Acer Computer",
+    "Price": 1000,
+    "Quantity": 12
+  },
+  {
+    "ProductId": "4",
+    "Name": "HP Computer",
+    "Price": 5,
+    "Quantity": 100
+  },
+  {
+    "ProductId": "5",
+    "Name": "Asus Computer",
+    "Price": 11000,
+    "Quantity": 3
+  },
+  {
+    "ProductId": "6",
+    "Name": "MSI Computer",
+    "Price": 12000,
+    "Quantity": 1
+  }
+]

@@ -9,9 +9,12 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.PlatformAbstractions;
+using Product.Api.Application.Async;
+using Product.Api.Application.Infrastructure;
 using Swashbuckle.AspNetCore.Swagger;
 using UnitOfWorks.Abstractions;
 using UnitOfWorks.EntityFrameworkCore;
@@ -30,10 +33,13 @@ namespace Product.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<ProductDbContext>();
+
+            services.AddSingleton<IHostedService, ProductHostedService>();
+
             services.AddMvcCore().AddVersionedApiExplorer(o => o.GroupNameFormat = "'v'VVV");
 
             services.AddMvc();
-
 
             services.AddMediatR(typeof(Startup));
 
@@ -73,6 +79,10 @@ namespace Product.Api
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+
+                // Seed database with data.
+                new ProductDbContext()
+                    .SeedDatabaseWithJson<Application.Entities.Product>("Seed/Products.json");
             }
 
             app.UseMvc();
