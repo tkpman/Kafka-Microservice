@@ -14,6 +14,8 @@ namespace Order.Api.Application.Orchestra
         {
             this.AddJob(new Jobs.OrderCreatedJob(
                 serviceProvider.GetRequiredService<IConfiguration>()));
+            this.AddJob(new Jobs.ReservedItemJob(
+                serviceProvider.GetRequiredService<IConfiguration>()));
         }
     }
 }

@@ -14,13 +14,12 @@ using UnitOfWorks.EntityFrameworkCore;
 
 namespace Order.Api.Application.Orchestra.Jobs
 {
-    public class OrderCreatedJob
+    public class ReservedItemJob
         : IJob
     {
         private readonly IConfiguration _configuration;
 
-        public OrderCreatedJob(
-            IConfiguration configuration)
+        public ReservedItemJob(IConfiguration configuration)
         {
             this._configuration = configuration;
         }
@@ -50,8 +49,7 @@ namespace Order.Api.Application.Orchestra.Jobs
                 { "avro.serializer.auto.register.schemas", true }
             };
 
-            using (var producer = new Producer<string, ReserveItems>(producerConfig, new AvroSerializer<string>(), new AvroSerializer<ReserveItems>()))
-            using (var consumer = new Consumer<string, OrderCreated>(consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<OrderCreated>()))
+            using (var consumer = new Consumer<string, ReservedItem>(consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<ReservedItem>()))
             {
                 consumer.OnMessage += (o, e) =>
                 {
@@ -61,41 +59,29 @@ namespace Order.Api.Application.Orchestra.Jobs
                         IUnitOfWork unitOfWork = new UnitOfWork<Infrastructure.OrderOrchestraDbContext>(orderOrchestraDbContext);
                         IRepository<Entities.Order> orderRepository = unitOfWork.GetRepository<Entities.Order>();
 
-                        // Converts OrderCreated to an order entity.
-                        var order = new Entities.Order()
+                        // Get the Order from the repository.
+                        var order = orderRepository.FirstOrDefault(x => x.OrderId == e.Value.OrderId).Result;
+
+                        if (order == null)
+                            throw new Exception();
+
+                        if (e.Value.Status.Equals("success"))
                         {
-                            OrderId = e.Value.id,
-                            CustomerId = e.Value.customerId,
-                            Date = DateTime.Parse(e.Value.date),
-                            Products = e.Value.products.Select(x => new Entities.OrderProduct()
-                            {
-                                ProductId = x.id,
-                                Quantity = x.Quantity
-                            }).ToList()
-                        };
+                            order.Status = Entities.Order.OrderStatus.Success;
+
+                        }
+                        else if (e.Value.Equals("outofstock"))
+                        {
+                            order.Status = Entities.Order.OrderStatus.Failed;
+                        }
 
                         // Save the order entity to the repository.
-                        orderRepository.Add(order);
+                        orderRepository.Update(order);
                         var result = unitOfWork.SaveChanges().Result;
 
                         // If save fails, throw an exception.
                         if (!result.IsSuccessfull())
                             throw new Exception();
-
-                        var reserveItems = new ReserveItems()
-                        {
-                            OrderId = order.OrderId,
-                            products = order.Products.Select(x => new ReserveItemProduct()
-                            {
-                                id = x.ProductId,
-                                Quantity = x.Quantity
-                            }).ToList()
-                        };
-
-                        var reserveItemsResult = producer.ProduceAsync(
-                            "reserve-items",
-                            Guid.NewGuid().ToString() + DateTime.Now,
-                            reserveItems).Result;
                     }
                 };
 
@@ -109,14 +95,13 @@ namespace Order.Api.Application.Orchestra.Jobs
                     Console.WriteLine("Consume error: " + e.Error.Reason);
                 };
 
-                consumer.Subscribe("order-created");
+                consumer.Subscribe("reserved-item");
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     consumer.Poll(100);
                 }
             }
-
         }
     }
 }

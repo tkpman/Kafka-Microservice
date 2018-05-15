@@ -13,6 +13,15 @@ namespace Order.Api.Application.Orchestra.Entities
         public DateTime Date { get; set; }
         public List<OrderProduct> Products { get; set; }
 
+        public OrderStatus Status { get; set; }
+
+        public enum OrderStatus
+        {
+            Success,
+            Payed,
+            Failed
+        }
+
     }
 
     public class OrderProduct
