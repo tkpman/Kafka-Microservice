@@ -6,9 +6,7 @@ using Order.Api.Application.Events;
 using Order.Api.Application.Orchestra.Infrastructure;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using UnitOfWorks.Abstractions;
 using UnitOfWorks.EntityFrameworkCore;
 
@@ -70,7 +68,7 @@ namespace Order.Api.Application.Orchestra.Jobs
                             order.Status = Entities.Order.OrderStatus.Success;
 
                         }
-                        else if (e.Value.Equals("outofstock"))
+                        else if (e.Value.Status.Equals("outofstock"))
                         {
                             order.Status = Entities.Order.OrderStatus.Failed;
                         }
