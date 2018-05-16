@@ -16,9 +16,10 @@ namespace Order.Api.Application.Events
 	public partial class ReserveCustomerCredit : ISpecificRecord
 	{
 		public static Schema _SCHEMA = Schema.Parse("{\"type\":\"record\",\"name\":\"ReserveCustomerCredit\",\"namespace\":\"Order.Api.Applicatio" +
-				"n.Events\",\"fields\":[{\"name\":\"OrderId\",\"type\":\"string\"},{\"name\":\"Amount\",\"type\":\"" +
-				"double\"}]}");
+				"n.Events\",\"fields\":[{\"name\":\"OrderId\",\"type\":\"string\"},{\"name\":\"CustomerId\",\"typ" +
+				"e\":\"string\"},{\"name\":\"Amount\",\"type\":\"double\"}]}");
 		private string _OrderId;
+		private string _CustomerId;
 		private double _Amount;
 		public virtual Schema Schema
 		{
@@ -38,6 +39,17 @@ namespace Order.Api.Application.Events
 				this._OrderId = value;
 			}
 		}
+		public string CustomerId
+		{
+			get
+			{
+				return this._CustomerId;
+			}
+			set
+			{
+				this._CustomerId = value;
+			}
+		}
 		public double Amount
 		{
 			get
@@ -54,7 +66,8 @@ namespace Order.Api.Application.Events
 			switch (fieldPos)
 			{
 			case 0: return this.OrderId;
-			case 1: return this.Amount;
+			case 1: return this.CustomerId;
+			case 2: return this.Amount;
 			default: throw new AvroRuntimeException("Bad index " + fieldPos + " in Get()");
 			};
 		}
@@ -63,7 +76,8 @@ namespace Order.Api.Application.Events
 			switch (fieldPos)
 			{
 			case 0: this.OrderId = (System.String)fieldValue; break;
-			case 1: this.Amount = (System.Double)fieldValue; break;
+			case 1: this.CustomerId = (System.String)fieldValue; break;
+			case 2: this.Amount = (System.Double)fieldValue; break;
 			default: throw new AvroRuntimeException("Bad index " + fieldPos + " in Put()");
 			};
 		}

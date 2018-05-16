@@ -87,7 +87,8 @@ namespace Order.Api.Application.Orchestra.Jobs
                     var reserveCustomerCredit = new ReserveCustomerCredit()
                     {
                         OrderId = e.Value.OrderId,
-                        Amount = e.Value.Total
+                        Amount = e.Value.Total,
+                        CustomerId = order.CustomerId
                     };
 
                     var r = reserveCustomerCreditProducer.ProduceAsync(

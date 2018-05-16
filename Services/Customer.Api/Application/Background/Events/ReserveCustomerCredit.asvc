@@ -4,6 +4,7 @@
      "name": "ReserveCustomerCredit",
      "fields":  [
          {"name": "OrderId", "type": "string"},
+         {"name": "CustomerId", "type": "string"},         
          {"name": "Amount", "type": "double"}
      ]
 }

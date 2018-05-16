@@ -61,7 +61,7 @@ namespace Customer.Api.Application.Background.Jobs
                 IRepository<Entities.OrderTransaction> orderTransactionRepository = unitOfWork.GetRepository<Entities.OrderTransaction>();
 
                 var customer = customerRepository
-                    .FirstOrDefault(x => x.CustomerId == e.Value.OrderId).Result;
+                    .FirstOrDefault(x => x.CustomerId == e.Value.CustomerId).Result;
 
                 if (customer != null)
                 {
