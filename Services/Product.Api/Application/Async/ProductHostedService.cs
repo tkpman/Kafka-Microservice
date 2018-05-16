@@ -18,6 +18,8 @@ namespace Product.Api.Application.Async
         {
             this.AddJob(new ReserveOrderJob(
                 serviceProvider.GetRequiredService<IConfiguration>()));
+            this.AddJob(new OrderFailedJob(
+                serviceProvider.GetRequiredService<IConfiguration>()));
         }
     }
 }

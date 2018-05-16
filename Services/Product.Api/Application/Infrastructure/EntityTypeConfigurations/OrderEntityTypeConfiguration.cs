@@ -15,7 +15,7 @@ namespace Product.Api.Application.Infrastructure.EntityTypeConfigurations
         {
             builder.HasKey(x => x.Id);
 
-            builder.HasMany(x => x.Products).WithOne(x => x.Order);
+            builder.HasMany(x => x.Products).WithOne(x => x.Order).OnDelete(DeleteBehavior.Cascade);
         }
     }
 

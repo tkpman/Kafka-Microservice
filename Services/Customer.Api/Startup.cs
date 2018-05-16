@@ -1,12 +1,16 @@
 ﻿using System.IO;
+using Customer.Api.Application.Background;
+using Customer.Api.Application.Infrastructure;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.PlatformAbstractions;
 using Swashbuckle.AspNetCore.Swagger;
+using UnitOfWorks.EntityFrameworkCore;
 
 namespace Customer.Api
 {
@@ -22,6 +26,8 @@ namespace Customer.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IHostedService, CustomerHostedService>();
+
             services.AddMvcCore()
                 // Add Api Explorer, so Swagger can find the API versioning in
                 // the controller / actions.
@@ -68,6 +74,10 @@ namespace Customer.Api
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+
+                // Seed the database in development mode.
+                new CustomerDbContext()
+                    .SeedDatabaseWithJson<Application.Entities.Customer>("Seed/Customer.json");
             }
 
             app.UseMvc();

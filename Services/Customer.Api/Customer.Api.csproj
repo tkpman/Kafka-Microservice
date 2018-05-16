@@ -10,11 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Application\Infrastructure\" />
+    <Folder Include="Application\Background\Events\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="0.11.4" />
+    <PackageReference Include="Confluent.Kafka.Avro" Version="0.11.4" />
     <PackageReference Include="MediatR" Version="4.1.0" />
     <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="4.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.6" />
@@ -28,8 +30,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Shared\HostedServices\HostedServices.csproj" />
     <ProjectReference Include="..\Shared\UnitOfWorks\UnitOfWorks.Abstractions\UnitOfWorks.Abstractions.csproj" />
     <ProjectReference Include="..\Shared\UnitOfWorks\UnitOfWorks.EntityFrameworkCore\UnitOfWorks.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Seed\Customer.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

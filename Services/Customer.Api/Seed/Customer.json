@@ -1,0 +1,14 @@
+﻿[
+  {
+    "CustomerId": "1",
+    "Name": "Simon",
+    "Credit": 100,
+    "OrderTransactions": []
+  },
+  {
+    "CustomerId": "2",
+    "Name": "Morten",
+    "Credit": 10000,
+    "OrderTransactions": []
+  }
+]

@@ -90,7 +90,7 @@ namespace Product.Api.Application.Async.Jobs
                         };
 
                         var reserveItemOutOfStockResult = producer.ProduceAsync(
-                            "reserved-item",
+                            "reserved-order",
                             Guid.NewGuid().ToString() + DateTime.Now,
                             reservedItemOutOfStock).Result;
 
@@ -117,7 +117,7 @@ namespace Product.Api.Application.Async.Jobs
                 };
 
                 var reserveItemResult = producer.ProduceAsync(
-                    "reserved-item",
+                    "reserved-order",
                     Guid.NewGuid().ToString() + DateTime.Now,
                     reservedItem).Result;
             }
