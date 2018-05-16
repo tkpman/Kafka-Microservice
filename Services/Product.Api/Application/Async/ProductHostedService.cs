@@ -16,7 +16,7 @@ namespace Product.Api.Application.Async
         public ProductHostedService(IServiceProvider serviceProvider) 
             : base(serviceProvider)
         {
-            this.AddJob(new ReserveItemsJob(
+            this.AddJob(new ReserveOrderJob(
                 serviceProvider.GetRequiredService<IConfiguration>()));
         }
     }

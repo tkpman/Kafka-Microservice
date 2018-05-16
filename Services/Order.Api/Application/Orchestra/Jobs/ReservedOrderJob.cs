@@ -6,25 +6,22 @@ using Order.Api.Application.Events;
 using Order.Api.Application.Orchestra.Infrastructure;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using UnitOfWorks.Abstractions;
 using UnitOfWorks.EntityFrameworkCore;
 
 namespace Order.Api.Application.Orchestra.Jobs
 {
-    public class OrderCreatedJob
+    public class ReservedOrderJob
         : IJob
     {
         private readonly IConfiguration _configuration;
 
-        private Dictionary<string, object> _consumerConfig;
+        private readonly Dictionary<string, object> _consumerConfig;
 
-        private Dictionary<string, object> _producerConfig;
+        private readonly Dictionary<string, object> _producerConfig;
 
-        public OrderCreatedJob(
-            IConfiguration configuration)
+        public ReservedOrderJob(IConfiguration configuration)
         {
             this._configuration = configuration;
 
@@ -52,7 +49,7 @@ namespace Order.Api.Application.Orchestra.Jobs
             };
         }
 
-        private void OnCreated(object o, Message<string, OrderCreated> e, Producer<string, ReserveOrder> producer)
+        private void OnReservedOrder(object o, Message<string, ReservedOrder> e)
         {
             using (var orderOrchestraDbContext = new OrderOrchestraDbContext())
             {
@@ -60,41 +57,30 @@ namespace Order.Api.Application.Orchestra.Jobs
                 IUnitOfWork unitOfWork = new UnitOfWork<Infrastructure.OrderOrchestraDbContext>(orderOrchestraDbContext);
                 IRepository<Entities.Order> orderRepository = unitOfWork.GetRepository<Entities.Order>();
 
-                // Converts OrderCreated to an order entity.
-                var order = new Entities.Order()
+                // Get the Order from the repository.
+                var order = orderRepository.FirstOrDefault(x => x.OrderId == e.Value.OrderId).Result;
+
+                if (order == null)
+                    throw new Exception();
+
+                if (e.Value.Status.Equals("success"))
                 {
-                    OrderId = e.Value.id,
-                    CustomerId = e.Value.customerId,
-                    Date = DateTime.Parse(e.Value.date),
-                    Products = e.Value.products.Select(x => new Entities.OrderProduct()
-                    {
-                        ProductId = x.id,
-                        Quantity = x.Quantity
-                    }).ToList()
-                };
+                    order.Status = Entities.Order.OrderStatus.Success;
+                    order.Total = e.Value.Total;
+
+                }
+                else if (e.Value.Status.Equals("outofstock"))
+                {
+                    order.Status = Entities.Order.OrderStatus.Failed;
+                }
 
                 // Save the order entity to the repository.
-                orderRepository.Add(order);
+                orderRepository.Update(order);
                 var result = unitOfWork.SaveChanges().Result;
 
                 // If save fails, throw an exception.
                 if (!result.IsSuccessfull())
                     throw new Exception();
-
-                var reserveItems = new ReserveOrder()
-                {
-                    OrderId = order.OrderId,
-                    products = order.Products.Select(x => new ReserveItemProduct()
-                    {
-                        id = x.ProductId,
-                        Quantity = x.Quantity
-                    }).ToList()
-                };
-
-                var reserveItemsResult = producer.ProduceAsync(
-                    "reserve-items",
-                    Guid.NewGuid().ToString() + DateTime.Now,
-                    reserveItems).Result;
             }
         }
 
@@ -104,23 +90,21 @@ namespace Order.Api.Application.Orchestra.Jobs
 
         public void Run(CancellationToken cancellationToken)
         {
-            using (var producer = new Producer<string, ReserveOrder>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<ReserveOrder>()))
-            using (var consumer = new Consumer<string, OrderCreated>(this._consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<OrderCreated>()))
+            using (var consumer = new Consumer<string, ReservedOrder>(this._consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<ReservedOrder>()))
             {
-                // Attach Event handlers to the consumer.
-                consumer.OnMessage += (o, e) => OnCreated(o, e, producer);
-                consumer.OnError +=  OnError;
+                // Add Event listeners.
+                consumer.OnMessage += (o, e) => OnReservedOrder(o, e);
+                consumer.OnError += OnError;
                 consumer.OnConsumeError += OnConsumeError;
 
-                // Subscribe for the Ordercreated Topic.
-                consumer.Subscribe("order-created");
+                // Subscribe to the ReservedItem topic.
+                consumer.Subscribe("reserved-order");
 
-                // Poll messages from Kafka, as long as no cancellation request
-                // is send.
+                // Poll messages from Kafka aslong as no cancellation is
+                // requested.
                 while (!cancellationToken.IsCancellationRequested)
                     consumer.Poll(100);
             }
-
         }
     }
 }

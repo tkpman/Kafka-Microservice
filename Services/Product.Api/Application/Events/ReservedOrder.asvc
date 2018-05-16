@@ -1,9 +1,10 @@
 {
     "namespace": "Order.Api.Application.Events",
      "type": "record",
-     "name": "ReservedItem",
+     "name": "ReservedOrder",
      "fields": [
              {"name": "OrderId", "type": "string"},
-             {"name": "Status", "type": "string"}
+             {"name": "Status", "type": "string"},
+             {"name": "Total", "type": "double"}
      ]
 }

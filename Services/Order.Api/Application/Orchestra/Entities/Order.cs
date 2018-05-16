@@ -15,6 +15,8 @@ namespace Order.Api.Application.Orchestra.Entities
 
         public OrderStatus Status { get; set; }
 
+        public double Total { get; set; }
+
         public enum OrderStatus
         {
             Success,
@@ -31,6 +33,5 @@ namespace Order.Api.Application.Orchestra.Entities
         public int Quantity { get; set; }
         public Order Order { get; set; }
         public int OrderId { get; set; }
-
     }
 }

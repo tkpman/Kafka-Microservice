@@ -1,7 +1,7 @@
 {
     "namespace": "Order.Api.Application.Events",
      "type": "record",
-     "name": "ReserveItems",
+     "name": "ReserveOrder",
      "fields":  [
          {"name": "OrderId", "type": "string"},
          {"name": "products", "type": {"type" : "array", "items": {

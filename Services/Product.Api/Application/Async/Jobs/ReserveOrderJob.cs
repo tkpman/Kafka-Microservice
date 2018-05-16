@@ -3,27 +3,26 @@ using Confluent.Kafka.Serialization;
 using HostedServices;
 using Microsoft.Extensions.Configuration;
 using Order.Api.Application.Events;
-using Order.Api.Application.Orchestra.Infrastructure;
+using Product.Api.Application.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using UnitOfWorks.Abstractions;
 using UnitOfWorks.EntityFrameworkCore;
 
-namespace Order.Api.Application.Orchestra.Jobs
+namespace Product.Api.Application.Async.Jobs
 {
-    public class OrderCreatedJob
+    public class ReserveOrderJob
         : IJob
     {
         private readonly IConfiguration _configuration;
 
-        private Dictionary<string, object> _consumerConfig;
+        private readonly Dictionary<string, object> _consumerConfig;
 
-        private Dictionary<string, object> _producerConfig;
+        private readonly Dictionary<string, object> _producerConfig;
 
-        public OrderCreatedJob(
+        public ReserveOrderJob(
             IConfiguration configuration)
         {
             this._configuration = configuration;
@@ -52,20 +51,17 @@ namespace Order.Api.Application.Orchestra.Jobs
             };
         }
 
-        private void OnCreated(object o, Message<string, OrderCreated> e, Producer<string, ReserveOrder> producer)
+        private void OnReserveOrder(object o, Message<string, ReserveOrder> e, Producer<string, ReservedOrder> producer)
         {
-            using (var orderOrchestraDbContext = new OrderOrchestraDbContext())
+            using (var productDbContext = new ProductDbContext())
             {
-
-                IUnitOfWork unitOfWork = new UnitOfWork<Infrastructure.OrderOrchestraDbContext>(orderOrchestraDbContext);
+                IUnitOfWork unitOfWork = new UnitOfWork<ProductDbContext>(productDbContext);
                 IRepository<Entities.Order> orderRepository = unitOfWork.GetRepository<Entities.Order>();
+                IRepository<Entities.Product> productRepository = unitOfWork.GetRepository<Entities.Product>();
 
-                // Converts OrderCreated to an order entity.
                 var order = new Entities.Order()
                 {
-                    OrderId = e.Value.id,
-                    CustomerId = e.Value.customerId,
-                    Date = DateTime.Parse(e.Value.date),
+                    OrderId = e.Value.OrderId,
                     Products = e.Value.products.Select(x => new Entities.OrderProduct()
                     {
                         ProductId = x.id,
@@ -73,28 +69,57 @@ namespace Order.Api.Application.Orchestra.Jobs
                     }).ToList()
                 };
 
-                // Save the order entity to the repository.
                 orderRepository.Add(order);
+
+                double totalPrice = 0;
+
+                // Very infiencent way of reserving items in database, should only be used
+                // for this project, for an easy way. It is only here for just working
+                // example.
+                foreach (var product in order.Products)
+                {
+                    var productInDatabase = productRepository
+                        .FirstOrDefault(x => x.ProductId == product.ProductId).Result;
+
+                    if (productInDatabase.Quantity - product.Quantity < 0)
+                    {
+                        var reservedItemOutOfStock = new ReservedOrder()
+                        {
+                            OrderId = order.OrderId,
+                            Status = "outofstock"
+                        };
+
+                        var reserveItemOutOfStockResult = producer.ProduceAsync(
+                            "reserved-item",
+                            Guid.NewGuid().ToString() + DateTime.Now,
+                            reservedItemOutOfStock).Result;
+
+                        return;
+                    }
+
+                    productInDatabase.Quantity -= product.Quantity;
+
+                    productRepository.Update(productInDatabase);
+
+                    totalPrice += productInDatabase.Price;
+                }
+
                 var result = unitOfWork.SaveChanges().Result;
 
-                // If save fails, throw an exception.
                 if (!result.IsSuccessfull())
                     throw new Exception();
 
-                var reserveItems = new ReserveOrder()
+                var reservedItem = new ReservedOrder()
                 {
                     OrderId = order.OrderId,
-                    products = order.Products.Select(x => new ReserveItemProduct()
-                    {
-                        id = x.ProductId,
-                        Quantity = x.Quantity
-                    }).ToList()
+                    Status = "success",
+                    Total = totalPrice
                 };
 
-                var reserveItemsResult = producer.ProduceAsync(
-                    "reserve-items",
+                var reserveItemResult = producer.ProduceAsync(
+                    "reserved-item",
                     Guid.NewGuid().ToString() + DateTime.Now,
-                    reserveItems).Result;
+                    reservedItem).Result;
             }
         }
 
@@ -104,23 +129,22 @@ namespace Order.Api.Application.Orchestra.Jobs
 
         public void Run(CancellationToken cancellationToken)
         {
-            using (var producer = new Producer<string, ReserveOrder>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<ReserveOrder>()))
-            using (var consumer = new Consumer<string, OrderCreated>(this._consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<OrderCreated>()))
+            using (var producer = new Producer<string, ReservedOrder>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<ReservedOrder>()))
+            using (var consumer = new Consumer<string, ReserveOrder>(this._consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<ReserveOrder>()))
             {
-                // Attach Event handlers to the consumer.
-                consumer.OnMessage += (o, e) => OnCreated(o, e, producer);
-                consumer.OnError +=  OnError;
+                // Add Event listeners.
+                consumer.OnMessage += (o, e) => OnReserveOrder(o, e, producer);
+                consumer.OnError += OnError;
                 consumer.OnConsumeError += OnConsumeError;
 
-                // Subscribe for the Ordercreated Topic.
-                consumer.Subscribe("order-created");
+                // Subscribe to the ReserveItems topic.
+                consumer.Subscribe("reserve-order");
 
-                // Poll messages from Kafka, as long as no cancellation request
-                // is send.
+                // Poll messages from Kafka aslong as no cancellation request
+                // is sent.
                 while (!cancellationToken.IsCancellationRequested)
                     consumer.Poll(100);
             }
-
         }
     }
 }

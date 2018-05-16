@@ -13,16 +13,16 @@ namespace Order.Api.Application.Events
 	using global::Avro;
 	using global::Avro.Specific;
 	
-	public partial class ReserveItems : ISpecificRecord
+	public partial class ReserveOrder : ISpecificRecord
 	{
-		public static Schema _SCHEMA = Schema.Parse(@"{""type"":""record"",""name"":""ReserveItems"",""namespace"":""Order.Api.Application.Events"",""fields"":[{""name"":""OrderId"",""type"":""string""},{""name"":""products"",""type"":{""type"":""array"",""items"":{""type"":""record"",""name"":""ReserveItemProduct"",""namespace"":""Order.Api.Application.Events"",""fields"":[{""name"":""id"",""type"":""string""},{""name"":""Quantity"",""type"":""int""}]}}}]}");
+		public static Schema _SCHEMA = Schema.Parse(@"{""type"":""record"",""name"":""ReserveOrder"",""namespace"":""Order.Api.Application.Events"",""fields"":[{""name"":""OrderId"",""type"":""string""},{""name"":""products"",""type"":{""type"":""array"",""items"":{""type"":""record"",""name"":""ReserveItemProduct"",""namespace"":""Order.Api.Application.Events"",""fields"":[{""name"":""id"",""type"":""string""},{""name"":""Quantity"",""type"":""int""}]}}}]}");
 		private string _OrderId;
 		private IList<Order.Api.Application.Events.ReserveItemProduct> _products;
 		public virtual Schema Schema
 		{
 			get
 			{
-				return ReserveItems._SCHEMA;
+				return ReserveOrder._SCHEMA;
 			}
 		}
 		public string OrderId

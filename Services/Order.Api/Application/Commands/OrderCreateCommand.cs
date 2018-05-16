@@ -70,7 +70,7 @@ namespace Order.Api.Application.Commands
                     }).ToList()
                 };
 
-                var dr = producer.ProduceAsync("order-created", orderCreated.id, orderCreated).Result;
+                var dr = await producer.ProduceAsync("order-created", orderCreated.id, orderCreated);
                 Console.WriteLine($"Delivered '{dr.Value}' to: {dr.TopicPartitionOffset}");
             }
 
