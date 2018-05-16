@@ -92,7 +92,7 @@ namespace Order.Api.Application.Orchestra.Jobs
                 };
 
                 var reserveItemsResult = producer.ProduceAsync(
-                    "reserve-items",
+                    "reserve-order",
                     Guid.NewGuid().ToString() + DateTime.Now,
                     reserveItems).Result;
             }

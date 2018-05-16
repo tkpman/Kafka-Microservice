@@ -49,7 +49,7 @@ namespace Order.Api.Application.Orchestra.Jobs
             };
         }
 
-        private void OnReservedOrder(object o, Message<string, ReservedOrder> e)
+        private void OnReservedOrder(object o, Message<string, ReservedOrder> e, Producer<string, ReserveCustomerCredit> reserveCustomerCreditProducer, Producer<string, OrderFailed> orderFailedProducer)
         {
             using (var orderOrchestraDbContext = new OrderOrchestraDbContext())
             {
@@ -81,6 +81,30 @@ namespace Order.Api.Application.Orchestra.Jobs
                 // If save fails, throw an exception.
                 if (!result.IsSuccessfull())
                     throw new Exception();
+
+                if (e.Value.Status.Equals("success"))
+                {
+                    var reserveCustomerCredit = new ReserveCustomerCredit()
+                    {
+                        OrderId = e.Value.OrderId,
+                        Amount = e.Value.Total
+                    };
+
+                    var r = reserveCustomerCreditProducer.ProduceAsync(
+                        "reserve-customer-credit", 
+                        Guid.NewGuid().ToString(), 
+                        reserveCustomerCredit).Result;
+                }
+                else if (e.Value.Status.Equals("outofstock"))
+                {
+                    var orderFailed = new OrderFailed()
+                    {
+                        OrderId = e.Value.OrderId
+                    };
+
+                    var r = orderFailedProducer.ProduceAsync(
+                        "order-failed", Guid.NewGuid().ToString(), orderFailed).Result;
+                }
             }
         }
 
@@ -90,10 +114,12 @@ namespace Order.Api.Application.Orchestra.Jobs
 
         public void Run(CancellationToken cancellationToken)
         {
+            using (var reserveCustomerCreditProducer = new Producer<string, ReserveCustomerCredit>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<ReserveCustomerCredit>()))
+            using (var orderFailedProducer = new Producer<string, OrderFailed>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<OrderFailed>()))
             using (var consumer = new Consumer<string, ReservedOrder>(this._consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<ReservedOrder>()))
             {
                 // Add Event listeners.
-                consumer.OnMessage += (o, e) => OnReservedOrder(o, e);
+                consumer.OnMessage += (o, e) => OnReservedOrder(o, e, reserveCustomerCreditProducer, orderFailedProducer);
                 consumer.OnError += OnError;
                 consumer.OnConsumeError += OnConsumeError;
 
