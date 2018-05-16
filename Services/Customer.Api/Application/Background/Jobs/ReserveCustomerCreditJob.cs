@@ -69,7 +69,7 @@ namespace Customer.Api.Application.Background.Jobs
                     {
                         try
                         {
-                            using (var transaction = customerDbContext.Database.BeginTransaction())
+                            //using (var transaction = customerDbContext.Database.BeginTransaction())
                             {
                                 var orderTransaction = new OrderTransaction()
                                 {
@@ -87,7 +87,7 @@ namespace Customer.Api.Application.Background.Jobs
 
                                 if (result.IsSuccessfull())
                                 {
-                                    transaction.Commit();
+                                    //transaction.Commit();
 
                                     var responseOk = new ReservedCustomerCredit()
                                     {
@@ -104,7 +104,7 @@ namespace Customer.Api.Application.Background.Jobs
                                 }
                             }
 
-                        } catch(Exception)
+                        } catch(Exception err)
                         {
 
                         }
