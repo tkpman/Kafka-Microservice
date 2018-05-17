@@ -9,8 +9,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Swagger;
 using UnitOfWorks.EntityFrameworkCore;
+using UnitOfWorks.Abstractions;
 
 namespace Customer.Api
 {
@@ -26,6 +28,9 @@ namespace Customer.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<CustomerDbContext>(options => options.UseInMemoryDatabase("Customer"));
+            services.AddTransient<IUnitOfWork, UnitOfWork<CustomerDbContext>>();
+
             services.AddSingleton<IHostedService, CustomerHostedService>();
 
             services.AddMvcCore()

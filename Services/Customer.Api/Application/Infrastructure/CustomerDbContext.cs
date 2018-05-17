@@ -10,6 +10,9 @@ namespace Customer.Api.Application.Infrastructure
     public class CustomerDbContext
         : DbContext
     {
+        public CustomerDbContext(DbContextOptions<CustomerDbContext> options)
+            : base() { }
+
         public CustomerDbContext() { }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

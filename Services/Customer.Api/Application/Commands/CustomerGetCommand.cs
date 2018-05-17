@@ -1,5 +1,6 @@
 ﻿using Customer.Api.Application.Models;
 using MediatR;
+using Order.Api.Application.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ using UnitOfWorks.Abstractions;
 namespace Customer.Api.Application.Commands
 {
     public class CustomerGetCommand
-        : IRequest<Application.Models.Customer>
+        : IRequest<CommandResult<Application.Models.Customer>>
     {
         public int CustomerId { get; set; }
 
@@ -24,24 +25,39 @@ namespace Customer.Api.Application.Commands
     }
 
     public class CustomerGetCommandHandler
-        : IRequestHandler<CustomerGetCommand, Application.Models.Customer>
+        : IRequestHandler<CustomerGetCommand, CommandResult<Application.Models.Customer>>
     {
-        //private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _unitOfWork;
 
-        //public CustomerGetCommandHandler(IUnitOfWork unitOfWork)
-        //{
-        //    if (unitOfWork == null)
-        //        throw new ArgumentNullException(nameof(unitOfWork));
-
-        //    this._unitOfWork = unitOfWork;
-        //}
-
-        public async Task<Models.Customer> Handle(CustomerGetCommand request, CancellationToken cancellationToken)
+        public CustomerGetCommandHandler(IUnitOfWork unitOfWork)
         {
-            //var customer = this._unitOfWork.GetRepository.FirstOrDefault();
-            //return customer;
+            if (unitOfWork == null)
+                throw new ArgumentNullException(nameof(unitOfWork));
 
-            throw new NotImplementedException();
+            this._unitOfWork = unitOfWork;
+        }
+
+        public async Task<CommandResult<Models.Customer>> Handle(CustomerGetCommand request, CancellationToken cancellationToken)
+        {
+            var customer = await this._unitOfWork
+                .GetRepository<Entities.Customer>()
+                .FirstOrDefault(x => x.Id == request.CustomerId);
+
+            if (customer == null)
+                return CommandResult<Models.Customer>.Failure(
+                    $"Failed to find customer with id {request.CustomerId}");
+
+            var model = new Models.Customer()
+            {
+                FirstName = customer.FirstName,
+                LastName = customer.LastName,
+                Address = customer.Address,
+                Credit = customer.Credit,
+                Email = customer.Email,
+                PhoneNumber = customer.PhoneNumber
+            };
+
+            return CommandResult<Models.Customer>.Success(model);
         }
     }
 }

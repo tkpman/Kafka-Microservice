@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Customer.Api.Application.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Order.Api.Application.Commands;
 
 namespace Customer.Api.Controllers
 {
@@ -30,18 +32,18 @@ namespace Customer.Api.Controllers
         [ProducesResponseType(typeof(Application.Models.Customer), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
-        public IActionResult GetCustomer(int id)
+        public async Task<IActionResult> GetCustomer(int id)
         {
             if (id < 0)
                 throw new ArgumentOutOfRangeException(nameof(id));
 
             var command = new CustomerGetCommand(id);
-            var result = this._mediator.Send(command);
+            var result = await this._mediator.Send(command);
 
-            if (result != null)
-                return new OkObjectResult(result);
+            if (result.Status == CommandResultStatus.Success)
+                return new OkObjectResult(result.Result);
 
-            return new BadRequestResult();
+            return new BadRequestObjectResult(result.Error);
         }
 
         /// <summary>
@@ -52,15 +54,15 @@ namespace Customer.Api.Controllers
         [ProducesResponseType(typeof(List<Application.Models.Customer>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
-        public IActionResult GetAllCustomers()
+        public async Task<IActionResult> GetAllCustomers()
         {
             var command = new CustomerAllCommand();
-            var result = this._mediator.Send(command);
+            var result = await this._mediator.Send(command);
 
-            if (result != null)
-                return new OkObjectResult(result);
+            if (result.Status == CommandResultStatus.Success)
+                return new OkObjectResult(result.Result);
 
-            return new BadRequestResult();
+            return new BadRequestObjectResult(result.Error);
         }
     }
 }

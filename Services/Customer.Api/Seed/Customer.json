@@ -1,14 +1,22 @@
 ﻿[
   {
     "CustomerId": "1",
-    "Name": "Simon",
-    "Credit": 100,
+    "FirstName": "Simon",
+    "LastName": "Simon",
+    "Address": "Simonvejs 64",
+    "Email": "simon@mail.dk",
+    "PhoneNumber": 80493023,
+    "Credit": 1000,
     "OrderTransactions": []
   },
   {
     "CustomerId": "2",
-    "Name": "Morten",
-    "Credit": 10000,
+    "FirstName": "Morten",
+    "LastName": "Morten",
+    "Address": "Mortenvejs 128",
+    "Email": "morten@mail.dk",
+    "PhoneNumber": 23563023,
+    "Credit": 100000,
     "OrderTransactions": []
   }
 ]
