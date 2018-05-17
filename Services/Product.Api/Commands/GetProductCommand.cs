@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using Microsoft.CodeAnalysis.CSharp;
 using Order.Api.Application.Commands;
 using UnitOfWorks.Abstractions;
 
@@ -25,29 +26,35 @@ namespace Product.Api.Commands
         IRequestHandler<GetProductCommand, 
         ICommandResult<Application.Models.Product>>
     {
-        //private readonly IUnitOfWork _UnitOfWork;
+        private readonly IUnitOfWork _UnitOfWork;
 
-        //public GetPruductCommandHndler(IUnitOfWork unitOfWork)
-        //{
-        //    if(unitOfWork == null)
-        //        throw new ArgumentNullException(nameof(unitOfWork));
+        public GetPruductCommandHndler(IUnitOfWork unitOfWork)
+        {
+            if (unitOfWork == null)
+                throw new ArgumentNullException(nameof(unitOfWork));
 
-        //    this._UnitOfWork = unitOfWork;
-        //}
+            this._UnitOfWork = unitOfWork;
+        }
 
         public async Task<ICommandResult<Application.Models.Product>> Handle(
             GetProductCommand request, 
             CancellationToken cancellationToken)
         {
-            Application.Models.Product product = new Application.Models.Product();
+            var repo = this._UnitOfWork.GetRepository<Application.Entities.Product>();
 
-            product.ProductId = "Test Discription";
-            product.Amount = 99999;
-            product.Id = 0;
-            product.Name = "Test product";
-            product.Price = 99999;
+            var product = await repo.FirstOrDefault(x => x.Id == request.Id);
 
-            return CommandResult<Application.Models.Product>.Success(product);
+            if (product == null)
+                return CommandResult<Application.Models.Product>.Failure("Could not find product");
+
+            var model = new Application.Models.Product();
+            model.Name = product.Name;
+            model.Amount = product.Quantity;
+            model.Id = product.Id;
+            model.Price = product.Price;
+            model.ProductId = product.ProductId;
+
+            return CommandResult<Application.Models.Product>.Success(model);
         }
     }
 }
