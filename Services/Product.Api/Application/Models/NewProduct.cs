@@ -16,10 +16,10 @@ namespace Product.Api.Application.Models
         public int Amount { get; set; }
     }
 
-    public class NewOrderValidator
+    public class NewProductValidator
         : AbstractValidator<NewProduct>
     {
-        public NewOrderValidator()
+        public NewProductValidator()
         {
             RuleFor(x => x.Name).
                 MinimumLength(1).
