@@ -41,7 +41,7 @@ namespace Product.Api.Commands
         {
             Application.Models.Product product = new Application.Models.Product();
 
-            product.Description = "Test Discription";
+            product.ProductId = "Test Discription";
             product.Amount = 99999;
             product.Id = 0;
             product.Name = "Test product";

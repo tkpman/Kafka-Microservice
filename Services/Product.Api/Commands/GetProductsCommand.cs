@@ -18,40 +18,40 @@ namespace Product.Api.Commands
         IRequestHandler<GetProductsCommand, 
         ICommandResult<List<Application.Models.Product>>>
     {
-        //private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _unitOfWork;
 
-        //public GetProductsCommandHandler(IUnitOfWork unitOfWork)
-        //{
-        //    if(unitOfWork == null)
-        //        throw new ArgumentNullException(nameof(unitOfWork));
-
-        //    this._unitOfWork = unitOfWork;
-        //}
-
-        public async Task<ICommandResult<List<Application.Models.Product>>> Handle(GetProductsCommand request, CancellationToken cancellationToken)
+        public GetProductsCommandHandler(IUnitOfWork unitOfWork)
         {
-            var products = new List<Application.Models.Product>();
+            if (unitOfWork == null)
+                throw new ArgumentNullException(nameof(unitOfWork));
 
-            Application.Models.Product product = new Application.Models.Product();
+            this._unitOfWork = unitOfWork;
+        }
 
-            product.Description = "Test Discription";
-            product.Amount = 99999;
-            product.Id = 0;
-            product.Name = "Test product";
-            product.Price = 99999;
+        public async Task<ICommandResult<List<Application.Models.Product>>> Handle(
+            GetProductsCommand request, 
+            CancellationToken cancellationToken)
+        {
+            var repo = this._unitOfWork.GetRepository<Application.Entities.Product>();
 
-            Application.Models.Product product1 = new Application.Models.Product();
+            var result = await repo.All();
 
-            product1.Description = "Test Discription";
-            product1.Amount = 99999;
-            product1.Id = 0;
-            product1.Name = "Test product";
-            product1.Price = 99999;
 
-            products.Add(product);
-            products.Add(product1);
+            List<Application.Models.Product> models = new List<Application.Models.Product>();
+            foreach (var product in result)
+            {
+                var model = new Application.Models.Product();
 
-            return CommandResult<List<Application.Models.Product>>.Success(products);
+                model.Name = product.Name;
+                model.Amount = product.Quantity;
+                model.Id = product.Id;
+                model.Price = product.Price;
+                model.ProductId = product.ProductId;
+
+                models.Add(model);
+            }
+
+            return CommandResult<List<Application.Models.Product>>.Success(models);
         }
     }
 }

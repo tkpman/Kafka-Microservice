@@ -36,6 +36,8 @@ namespace Product.Api
 
             services.AddDbContext<ProductDbContext>();
 
+            services.AddScoped<IUnitOfWork, UnitOfWork<ProductDbContext>>();
+
             services.AddSingleton<IHostedService, ProductHostedService>();
 
             services.AddMvcCore().AddVersionedApiExplorer(o => o.GroupNameFormat = "'v'VVV");

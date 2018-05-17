@@ -11,7 +11,7 @@ namespace Product.Api.Application.Models
         public NewProduct() { }
 
         public string Name { get; set; }
-        public string Description { get; set; }
+        public string ProductId { get; set; }
         public int Price { get; set; }
         public int Amount { get; set; }
     }
@@ -29,9 +29,9 @@ namespace Product.Api.Application.Models
                 GreaterThan(1).
                 WithMessage("Must be above 1");
 
-            RuleFor(x => x.Description).
+            RuleFor(x => x.ProductId).
                 MinimumLength(1).
-                WithMessage("Please enter a description");
+                WithMessage("Please enter a ProductId");
 
             RuleFor(x => x.Price).
                 GreaterThan(1).
