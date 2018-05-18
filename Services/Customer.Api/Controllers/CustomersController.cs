@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Customer.Api.Application.Commands;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Customer.Api.Controllers
@@ -33,16 +30,16 @@ namespace Customer.Api.Controllers
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
-        public IActionResult CreateCustomer([FromBody] Application.Models.Customer customer)
+        public async Task<IActionResult> CreateCustomer([FromBody] Application.Models.NewCustomer customer)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
             var command = new CustomerAddCommand(customer);
-            var result = this._mediator.Send(command);
+            var result = await this._mediator.Send(command);
 
             if (result != null)
-                return new OkObjectResult(result);
+                return new OkObjectResult(result.Result);
 
             return new BadRequestResult();
         }
@@ -56,16 +53,16 @@ namespace Customer.Api.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
-        public IActionResult UpdateCustomer([FromBody] Application.Models.Customer customer)
+        public async Task<IActionResult> UpdateCustomer([FromBody] Application.Models.Customer customer)
         {
             if (customer == null)
                 throw new ArgumentNullException(nameof(customer));
 
             var command = new CustomerUpdateCommand(customer);
-            var result = this._mediator.Send(command);
+            var result = await this._mediator.Send(command);
 
             if (result != null)
-                return new OkObjectResult(result);
+                return new OkObjectResult(result.Result);
 
             return new BadRequestResult();
         }
@@ -79,16 +76,16 @@ namespace Customer.Api.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
-        public IActionResult DeleteCustomer(int id)
+        public async Task<IActionResult> DeleteCustomer(int id)
         {
             if (id < 0)
                 throw new ArgumentOutOfRangeException(nameof(id));
 
             var command = new CustomerRemoveCommand(id);
-            var result = this._mediator.Send(command);
+            var result = await this._mediator.Send(command);
 
             if (result != null)
-                return new OkObjectResult(result);
+                return new OkObjectResult(result.Result);
 
             return new BadRequestResult();
         }

@@ -1,15 +1,13 @@
-﻿using Customer.Api.Application.Models;
-using MediatR;
+﻿using MediatR;
+using Order.Api.Application.Commands;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnitOfWorks.Abstractions;
 
 namespace Customer.Api.Application.Commands
 {
-    public class CustomerRemoveCommand : IRequest<Application.Models.Customer>
+    public class CustomerRemoveCommand : IRequest<ICommandResult<bool>>
     {
         public int CustomerId { get; set; }
 
@@ -22,37 +20,41 @@ namespace Customer.Api.Application.Commands
         }
     }
 
-    public class CustomerRemoveCommandHandler : IRequestHandler<CustomerRemoveCommand, Application.Models.Customer>
+    public class CustomerRemoveCommandHandler : IRequestHandler<CustomerRemoveCommand, ICommandResult<bool>>
     {
-        //private readonly IUnitOfWork _unitOfWork;
-        //private readonly IMediator _mediator;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMediator _mediator;
 
-        //public CustomerRemoveCommandHandler(IUnitOfWork unitOfWork, IMediator mediator)
-        //{
-        //    if (unitOfWork == null)
-        //        throw new ArgumentNullException(nameof(unitOfWork));
-
-        //    if (mediator == null)
-        //        throw new ArgumentNullException(nameof(mediator));
-
-        //    this._unitOfWork = unitOfWork;
-        //    this._mediator = mediator;
-        //}
-
-        public async Task<Models.Customer> Handle(CustomerRemoveCommand request, CancellationToken cancellationToken)
+        public CustomerRemoveCommandHandler(IUnitOfWork unitOfWork, IMediator mediator)
         {
-            //var command = new CustomerGetCommand(request.CustomerId);
-            //var customerToDelete = await this._mediator.Send(command);
+            if (unitOfWork == null)
+                throw new ArgumentNullException(nameof(unitOfWork));
 
-            //if (customerToDelete == null)
-            //    return null;
+            if (mediator == null)
+                throw new ArgumentNullException(nameof(mediator));
 
-            //var customer = this._unitOfWork.GetRepository.remove(customerToDelete);
-            //var result = await this._unitOfWork.SaveChanges(cancellationToken);
+            this._unitOfWork = unitOfWork;
+            this._mediator = mediator;
+        }
 
-            //return result ? customer : null;
+        public async Task<ICommandResult<bool>> Handle(CustomerRemoveCommand request, CancellationToken cancellationToken)
+        {
+            var repo = this._unitOfWork.GetRepository<Application.Entities.Customer>();
 
-            throw new NotImplementedException();
+            var customer = await repo.FirstOrDefault(x => x.Id == request.CustomerId);
+
+            if (customer == null)
+                return CommandResult<bool>.Failure("Something went wrong delete handler");
+
+
+            repo.Remove(customer);
+
+            var result = await this._unitOfWork.SaveChanges(cancellationToken);
+
+            if (!result.IsSuccessfull())
+                return CommandResult<bool>.Failure("coult not delete");
+
+            return CommandResult<bool>.Success(true);
         }
     }
 }

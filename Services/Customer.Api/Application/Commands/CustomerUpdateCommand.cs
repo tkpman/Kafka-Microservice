@@ -1,15 +1,13 @@
-﻿using Customer.Api.Application.Models;
-using MediatR;
+﻿using MediatR;
+using Order.Api.Application.Commands;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnitOfWorks.Abstractions;
 
 namespace Customer.Api.Application.Commands
 {
-    public class CustomerUpdateCommand : IRequest<Application.Models.Customer>
+    public class CustomerUpdateCommand : IRequest<ICommandResult<Application.Models.Customer>>
     {
         public Application.Models.Customer Customer { get; set; }
 
@@ -23,35 +21,44 @@ namespace Customer.Api.Application.Commands
     }
 
     public class CustomerUpdateCommandHandler
-        : IRequestHandler<CustomerUpdateCommand, Application.Models.Customer>
+        : IRequestHandler<CustomerUpdateCommand, ICommandResult<Application.Models.Customer>>
 
     {
-        //private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _unitOfWork;
 
-        //public CustomerUpdateCommandHandler(IUnitOfWork unitOfWork)
-        //{
-        //    if (unitOfWork == null)
-        //        throw new ArgumentNullException(nameof(unitOfWork));
-
-        //    this._unitOfWork = unitOfWork;
-        //}
-
-        public async Task<Models.Customer> Handle(CustomerUpdateCommand request, CancellationToken cancellationToken)
+        public CustomerUpdateCommandHandler(IUnitOfWork unitOfWork)
         {
-            //var updatedCustomer = new Application.Models.Customer(
-            //    request.Customer.FirstName,
-            //    request.Customer.LastName,
-            //    request.Customer.Address,
-            //    request.Customer.Email,
-            //    request.Customer.PhoneNumber
-            //    );
+            if (unitOfWork == null)
+                throw new ArgumentNullException(nameof(unitOfWork));
 
-            //var customer = this._unitOfWork.GetRepository.Update(updatedCustomer);
-            //var result = await this._unitOfWork.SaveChanges(cancellationToken);
+            this._unitOfWork = unitOfWork;
+        }
 
-            //return result ? customer : null;
+        public async Task<ICommandResult<Application.Models.Customer>> Handle(CustomerUpdateCommand request, CancellationToken cancellationToken)
+        {
+            var repo = this._unitOfWork.GetRepository<Application.Entities.Customer>();
 
-            throw new NotImplementedException();
+            var customerToUpdate = await repo.FirstOrDefault(x => x.Id == request.Customer.Id);
+
+            if (customerToUpdate == null)
+                return CommandResult<Application.Models.Customer>.Failure("could not find customer to update");
+
+            customerToUpdate.FirstName = request.Customer.FirstName;
+            customerToUpdate.LastName = request.Customer.LastName;
+            customerToUpdate.Address = request.Customer.Address;
+            customerToUpdate.Email = request.Customer.Email;
+            customerToUpdate.PhoneNumber = request.Customer.PhoneNumber;
+            customerToUpdate.Credit = request.Customer.Credit;
+
+            repo.Update(customerToUpdate);
+
+            var result = await this._unitOfWork.SaveChanges(cancellationToken);
+
+            if (!result.IsSuccessfull())
+                return CommandResult<Application.Models.Customer>.Failure("Error when creating Customer");
+
+            return CommandResult<Application.Models.Customer>.Success(request.Customer);
+
         }
     }
 }
