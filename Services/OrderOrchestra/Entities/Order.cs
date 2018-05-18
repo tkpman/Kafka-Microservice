@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Order.Api.Application.Orchestra.Entities
+namespace OrderOrchestra.Entities
 {
     public class Order
     {
@@ -19,10 +19,9 @@ namespace Order.Api.Application.Orchestra.Entities
 
         public enum OrderStatus
         {
-            WaitingForReservation,
-            WaitingForPayment,
-            Failed,
-            Success
+            Success,
+            Payed,
+            Failed
         }
 
     }

@@ -1,0 +1,10 @@
+{
+    "namespace": "Order.Api.Application.Events",
+     "type": "record",
+     "name": "ReserveCustomerCredit",
+     "fields":  [
+         {"name": "OrderId", "type": "string"},
+         {"name": "CustomerId", "type": "string"},         
+         {"name": "Amount", "type": "double"}
+     ]
+}

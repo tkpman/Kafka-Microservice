@@ -1,0 +1,8 @@
+{
+    "namespace": "Order.Api.Application.Events",
+     "type": "record",
+     "name": "OrderFailed",
+     "fields":  [
+         {"name": "OrderId", "type": "string"}
+     ]
+}

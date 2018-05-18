@@ -52,7 +52,11 @@ namespace Order.Api.Application.Orchestra.Jobs
             };
         }
 
-        private void OnCreated(object o, Message<string, OrderCreated> e, Producer<string, ReserveOrder> producer)
+        private void OnCreated(
+            object o,
+            Message<string, OrderCreated> e, 
+            Producer<string, ReserveOrder> producer, 
+            Producer<string, OrderState> orderStateProducer)
         {
             using (var orderOrchestraDbContext = new OrderOrchestraDbContext())
             {
@@ -70,7 +74,8 @@ namespace Order.Api.Application.Orchestra.Jobs
                     {
                         ProductId = x.id,
                         Quantity = x.Quantity
-                    }).ToList()
+                    }).ToList(),
+                    Status = Entities.Order.OrderStatus.WaitingForReservation
                 };
 
                 // Save the order entity to the repository.
@@ -80,6 +85,24 @@ namespace Order.Api.Application.Orchestra.Jobs
                 // If save fails, throw an exception.
                 if (!result.IsSuccessfull())
                     throw new Exception();
+
+                var orderState = new OrderState()
+                {
+                    customerId = order.CustomerId,
+                    date = order.Date.ToString(),
+                    status = order.Status.ToString(),
+                    total = order.Total,
+                    products = order.Products.Select(x => new OrderProduct()
+                    {
+                        id = x.ProductId,
+                        Quantity = x.Quantity
+                    }).ToList()
+                };
+
+                var orderStateResult = orderStateProducer.ProduceAsync(
+                    "order-state", 
+                    Guid.NewGuid().ToString(), 
+                    orderState).Result;
 
                 var reserveItems = new ReserveOrder()
                 {
@@ -104,11 +127,12 @@ namespace Order.Api.Application.Orchestra.Jobs
 
         public void Run(CancellationToken cancellationToken)
         {
+            using (var orderStateProducer = new Producer<string, OrderState>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<OrderState>()))
             using (var producer = new Producer<string, ReserveOrder>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<ReserveOrder>()))
             using (var consumer = new Consumer<string, OrderCreated>(this._consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<OrderCreated>()))
             {
                 // Attach Event handlers to the consumer.
-                consumer.OnMessage += (o, e) => OnCreated(o, e, producer);
+                consumer.OnMessage += (o, e) => OnCreated(o, e, producer, orderStateProducer);
                 consumer.OnError +=  OnError;
                 consumer.OnConsumeError += OnConsumeError;
 

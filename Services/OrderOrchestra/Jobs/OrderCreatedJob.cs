@@ -3,7 +3,7 @@ using Confluent.Kafka.Serialization;
 using HostedServices;
 using Microsoft.Extensions.Configuration;
 using Order.Api.Application.Events;
-using Order.Api.Application.Orchestra.Infrastructure;
+using OrderOrchestra.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,18 +12,19 @@ using System.Threading.Tasks;
 using UnitOfWorks.Abstractions;
 using UnitOfWorks.EntityFrameworkCore;
 
-namespace Order.Api.Application.Orchestra.Jobs
+namespace OrderOrchestra.Jobs
 {
-    public class ReservedCustomerCreditJob
+    public class OrderCreatedJob
         : IJob
     {
         private readonly IConfiguration _configuration;
 
-        private readonly Dictionary<string, object> _consumerConfig;
+        private Dictionary<string, object> _consumerConfig;
 
-        private readonly Dictionary<string, object> _producerConfig;
+        private Dictionary<string, object> _producerConfig;
 
-        public ReservedCustomerCreditJob(IConfiguration configuration)
+        public OrderCreatedJob(
+            IConfiguration configuration)
         {
             this._configuration = configuration;
 
@@ -51,67 +52,49 @@ namespace Order.Api.Application.Orchestra.Jobs
             };
         }
 
-        private void OnReservedCustomerCredit(
-            object o, 
-            Message<string, ReservedCustomerCredit> e,
-            Producer<string, OrderFailed> producer,
-            Producer<string, OrderState> orderStateProducer)
+        private void OnCreated(object o, Message<string, OrderCreated> e, Producer<string, ReserveOrder> producer)
         {
             using (var orderOrchestraDbContext = new OrderOrchestraDbContext())
             {
+
                 IUnitOfWork unitOfWork = new UnitOfWork<Infrastructure.OrderOrchestraDbContext>(orderOrchestraDbContext);
                 IRepository<Entities.Order> orderRepository = unitOfWork.GetRepository<Entities.Order>();
 
-                var order = orderRepository.FirstOrDefault(x => x.OrderId == e.Value.OrderId).Result;
-                
-                if (e.Value.Status.Equals("success"))
+                // Converts OrderCreated to an order entity.
+                var order = new Entities.Order()
                 {
-                    order.Status = Entities.Order.OrderStatus.Success;
-                }
-                else
-                {
-                    order.Status = Entities.Order.OrderStatus.Failed;
-                }
+                    OrderId = e.Value.id,
+                    CustomerId = e.Value.customerId,
+                    Date = DateTime.Parse(e.Value.date),
+                    Products = e.Value.products.Select(x => new Entities.OrderProduct()
+                    {
+                        ProductId = x.id,
+                        Quantity = x.Quantity
+                    }).ToList()
+                };
 
+                // Save the order entity to the repository.
+                orderRepository.Add(order);
                 var result = unitOfWork.SaveChanges().Result;
 
+                // If save fails, throw an exception.
                 if (!result.IsSuccessfull())
                     throw new Exception();
 
-                var orderState = new OrderState()
+                var reserveItems = new ReserveOrder()
                 {
-                    customerId = order.CustomerId,
-                    date = order.Date.ToString(),
-                    status = order.Status.ToString(),
-                    total = order.Total,
-                    products = order.Products.Select(x => new OrderProduct()
+                    OrderId = order.OrderId,
+                    products = order.Products.Select(x => new ReserveItemProduct()
                     {
                         id = x.ProductId,
                         Quantity = x.Quantity
                     }).ToList()
                 };
 
-                var orderStateResult = orderStateProducer.ProduceAsync(
-                    "order-state",
-                    Guid.NewGuid().ToString(),
-                    orderState).Result;
-
-                if (e.Value.Status.Equals("success"))
-                {
-                    // TODO:
-                }
-                else
-                {
-                    var orderFailed = new OrderFailed()
-                    {
-                        OrderId = e.Value.OrderId
-                    };
-
-                    var p = producer.ProduceAsync(
-                        "order-failed", 
-                        Guid.NewGuid().ToString(), 
-                        orderFailed).Result;
-                }
+                var reserveItemsResult = producer.ProduceAsync(
+                    "reserve-order",
+                    Guid.NewGuid().ToString() + DateTime.Now,
+                    reserveItems).Result;
             }
         }
 
@@ -121,23 +104,23 @@ namespace Order.Api.Application.Orchestra.Jobs
 
         public void Run(CancellationToken cancellationToken)
         {
-            using (var orderStateProducer = new Producer<string, OrderState>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<OrderState>()))
-            using (var producer = new Producer<string, OrderFailed>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<OrderFailed>()))
-            using (var consumer = new Consumer<string, ReservedCustomerCredit>(this._consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<ReservedCustomerCredit>()))
+            using (var producer = new Producer<string, ReserveOrder>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<ReserveOrder>()))
+            using (var consumer = new Consumer<string, OrderCreated>(this._consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<OrderCreated>()))
             {
-                // Add Event listeners.
-                consumer.OnMessage += (o, e) => OnReservedCustomerCredit(o, e, producer, orderStateProducer);
-                consumer.OnError += OnError;
+                // Attach Event handlers to the consumer.
+                consumer.OnMessage += (o, e) => OnCreated(o, e, producer);
+                consumer.OnError +=  OnError;
                 consumer.OnConsumeError += OnConsumeError;
 
-                // Subscribe to the ReservedItem topic.
-                consumer.Subscribe("reserved-customer-credit");
+                // Subscribe for the Ordercreated Topic.
+                consumer.Subscribe("order-created");
 
-                // Poll messages from Kafka aslong as no cancellation is
-                // requested.
+                // Poll messages from Kafka, as long as no cancellation request
+                // is send.
                 while (!cancellationToken.IsCancellationRequested)
                     consumer.Poll(100);
             }
+
         }
     }
 }
