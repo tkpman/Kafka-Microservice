@@ -58,24 +58,36 @@ namespace OrderQuery.Api.Application.Background.Jobs
                 var orderRepository = unitOfWork.GetRepository<Entities.Order>();
 
                 var order = (orderRepository.FirstOrDefault(x => x.OrderId == e.Value.id).Result);
-
-                if (order != null)
-                    throw new NotImplementedException();
-
-                var newOrder = new Entities.Order()
+                
+                if (order == null)
                 {
-                    CustomerId = e.Value.customerId,
-                    Date = e.Value.date,
-                    OrderId = e.Value.id,
-                    Total = e.Value.total,
-                    Products = e.Value.products.Select(x => new Entities.OrderProduct()
+                    var newOrder = new Entities.Order()
                     {
-                        ProductId = x.id,
-                        Quantity = x.Quantity
-                    }).ToList()
-                };
+                        CustomerId = e.Value.customerId,
+                        Date = e.Value.date,
+                        OrderId = e.Value.id,
+                        Total = e.Value.total,
+                        Products = e.Value.products.Select(x => new Entities.OrderProduct()
+                        {
+                            ProductId = x.id,
+                            Quantity = x.Quantity
+                        }).ToList()
+                    };
 
-                orderRepository.Add(newOrder);
+                    orderRepository.Add(newOrder);
+                } else
+                {
+                    if (e.Value.status.Equals("WaitingForReservation"))
+                        order.Status = Entities.Order.OrderStatus.WaitingForReservation;
+                    else if (e.Value.status.Equals("WaitingForPayment"))
+                        order.Status = Entities.Order.OrderStatus.WaitingForPayment;
+                    else if (e.Value.status.Equals("Failed"))
+                        order.Status = Entities.Order.OrderStatus.Failed;
+                    else if (e.Value.status.Equals("Success"))
+                        order.Status = Entities.Order.OrderStatus.Success;
+
+                    orderRepository.Update(order);
+                }
 
                 var result = unitOfWork.SaveChanges().Result;
 
@@ -99,7 +111,7 @@ namespace OrderQuery.Api.Application.Background.Jobs
                 consumer.OnConsumeError += OnConsumeError;
 
                 // Subscribe for the Order Topic.
-                consumer.Subscribe("order");
+                consumer.Subscribe("order-state");
 
                 // Poll messages from Kafka, as long as no cancellation request
                 // is send.

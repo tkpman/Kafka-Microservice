@@ -62,7 +62,9 @@ namespace OrderOrchestra.Jobs
                 IUnitOfWork unitOfWork = new UnitOfWork<Infrastructure.OrderOrchestraDbContext>(orderOrchestraDbContext);
                 IRepository<Entities.Order> orderRepository = unitOfWork.GetRepository<Entities.Order>();
 
-                var order = orderRepository.FirstOrDefault(x => x.OrderId == e.Value.OrderId).Result;
+                var specification = new Specification<Entities.Order>();
+                specification.Include(x => x.Products);
+                var order = orderRepository.FirstOrDefault(x => x.OrderId == e.Value.OrderId, specification).Result;
                 
                 if (e.Value.Status.Equals("success"))
                 {
@@ -80,6 +82,7 @@ namespace OrderOrchestra.Jobs
 
                 var orderState = new OrderState()
                 {
+                    id = order.OrderId,
                     customerId = order.CustomerId,
                     date = order.Date.ToString(),
                     status = order.Status.ToString(),

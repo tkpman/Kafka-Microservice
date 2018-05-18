@@ -29,9 +29,12 @@ namespace OrderQuery.Api.Application.Commands
             OrderAllCommand request, 
             CancellationToken cancellationToken)
         {
+            var specification = new Specification<Entities.Order>();
+            specification.Include(x => x.Products);
+
             var orders = await this._unitOfWork
                 .GetRepository<Entities.Order>()
-                .All();
+                .All(specification);
 
             var models = orders.Select(x => new Models.Order()
             {
@@ -39,7 +42,7 @@ namespace OrderQuery.Api.Application.Commands
                 Date = x.Date,
                 OrderId = x.OrderId,
                 Total = x.Total,
-                Products = x.Products.Select(p => new Models.Product()
+                Products = x.Products?.Select(p => new Models.Product()
                 {
                     ProductId = p.ProductId,
                     Quantity = p.Quantity

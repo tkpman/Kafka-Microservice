@@ -9,13 +9,13 @@ namespace OrderQuery.Api.Application.Infrastructure
         public OrderDbContext(DbContextOptions<OrderDbContext> options)
             : base() { }
 
-        public OrderDbContext() : base() { }
+        public OrderDbContext() { }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
 
-            optionsBuilder.UseInMemoryDatabase("Order.Query");
+            optionsBuilder.UseInMemoryDatabase("Order");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

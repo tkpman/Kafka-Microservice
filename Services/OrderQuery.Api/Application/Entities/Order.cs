@@ -18,6 +18,16 @@ namespace OrderQuery.Api.Application.Entities
         public double Total { get; set; }
 
         public List<OrderProduct> Products { get; set; }
+
+        public OrderStatus Status { get; set; }
+
+        public enum OrderStatus
+        {
+            WaitingForReservation,
+            WaitingForPayment,
+            Failed,
+            Success
+        }
     }
 
     public class OrderProduct

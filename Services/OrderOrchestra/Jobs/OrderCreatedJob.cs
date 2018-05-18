@@ -88,6 +88,7 @@ namespace OrderOrchestra.Jobs
 
                 var orderState = new OrderState()
                 {
+                    id = order.OrderId,
                     customerId = order.CustomerId,
                     date = order.Date.ToString(),
                     status = order.Status.ToString(),
