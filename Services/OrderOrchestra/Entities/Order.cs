@@ -19,8 +19,9 @@ namespace OrderOrchestra.Entities
 
         public enum OrderStatus
         {
+            WaitingForReservation,
+            WaitingForPayment,
             Success,
-            Payed,
             Failed
         }
 

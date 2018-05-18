@@ -6,6 +6,7 @@ using Order.Api.Application.Events;
 using OrderOrchestra.Infrastructure;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnitOfWorks.Abstractions;
 using UnitOfWorks.EntityFrameworkCore;
@@ -49,7 +50,12 @@ namespace OrderOrchestra.Jobs
             };
         }
 
-        private void OnReservedOrder(object o, Message<string, ReservedOrder> e, Producer<string, ReserveCustomerCredit> reserveCustomerCreditProducer, Producer<string, OrderFailed> orderFailedProducer)
+        private void OnReservedOrder(
+            object o, Message<string, 
+            ReservedOrder> e, 
+            Producer<string, ReserveCustomerCredit> reserveCustomerCreditProducer, 
+            Producer<string, OrderFailed> orderFailedProducer,
+            Producer<string, OrderState> orderStateProducer)
         {
             using (var orderOrchestraDbContext = new OrderOrchestraDbContext())
             {
@@ -65,7 +71,7 @@ namespace OrderOrchestra.Jobs
 
                 if (e.Value.Status.Equals("success"))
                 {
-                    order.Status = Entities.Order.OrderStatus.Success;
+                    order.Status = Entities.Order.OrderStatus.WaitingForPayment;
                     order.Total = e.Value.Total;
 
                 }
@@ -81,6 +87,24 @@ namespace OrderOrchestra.Jobs
                 // If save fails, throw an exception.
                 if (!result.IsSuccessfull())
                     throw new Exception();
+
+                var orderState = new OrderState()
+                {
+                    customerId = order.CustomerId,
+                    date = order.Date.ToString(),
+                    status = order.Status.ToString(),
+                    total = order.Total,
+                    products = order.Products.Select(x => new OrderProduct()
+                    {
+                        id = x.ProductId,
+                        Quantity = x.Quantity
+                    }).ToList()
+                };
+
+                var orderStateResult = orderStateProducer.ProduceAsync(
+                    "order-state",
+                    Guid.NewGuid().ToString(),
+                    orderState).Result;
 
                 if (e.Value.Status.Equals("success"))
                 {
@@ -115,12 +139,13 @@ namespace OrderOrchestra.Jobs
 
         public void Run(CancellationToken cancellationToken)
         {
+            using (var orderStateProducer = new Producer<string, OrderState>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<OrderState>()))
             using (var reserveCustomerCreditProducer = new Producer<string, ReserveCustomerCredit>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<ReserveCustomerCredit>()))
             using (var orderFailedProducer = new Producer<string, OrderFailed>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<OrderFailed>()))
             using (var consumer = new Consumer<string, ReservedOrder>(this._consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<ReservedOrder>()))
             {
                 // Add Event listeners.
-                consumer.OnMessage += (o, e) => OnReservedOrder(o, e, reserveCustomerCreditProducer, orderFailedProducer);
+                consumer.OnMessage += (o, e) => OnReservedOrder(o, e, reserveCustomerCreditProducer, orderFailedProducer, orderStateProducer);
                 consumer.OnError += OnError;
                 consumer.OnConsumeError += OnConsumeError;
 

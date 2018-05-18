@@ -1,0 +1,20 @@
+{
+    "namespace": "Order.Api.Application.Events",
+     "type": "record",
+     "name": "OrderState",
+     "fields":  [
+        {"name": "id", "type": "string"},
+        {"name": "customerId",  "type": "string"},
+        {"name": "date", "type": "string"},
+        {"name": "status", "type": "string"},
+        {"name": "total", "type": "double"},
+        {"name": "products", "type": {"type" : "array", "items": {
+            "name" : "OrderProduct",
+            "type" : "record",
+            "fields" : [
+                {"name" : "id",  "type": "string"},
+                {"name" : "Quantity",  "type": "int"},
+         ]
+     }}}
+     ]
+}  

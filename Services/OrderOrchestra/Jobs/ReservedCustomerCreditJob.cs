@@ -54,7 +54,8 @@ namespace OrderOrchestra.Jobs
         private void OnReservedCustomerCredit(
             object o, 
             Message<string, ReservedCustomerCredit> e,
-            Producer<string, OrderFailed> producer)
+            Producer<string, OrderFailed> producer,
+            Producer<string, OrderState> orderStateProducer)
         {
             using (var orderOrchestraDbContext = new OrderOrchestraDbContext())
             {
@@ -76,6 +77,24 @@ namespace OrderOrchestra.Jobs
 
                 if (!result.IsSuccessfull())
                     throw new Exception();
+
+                var orderState = new OrderState()
+                {
+                    customerId = order.CustomerId,
+                    date = order.Date.ToString(),
+                    status = order.Status.ToString(),
+                    total = order.Total,
+                    products = order.Products.Select(x => new OrderProduct()
+                    {
+                        id = x.ProductId,
+                        Quantity = x.Quantity
+                    }).ToList()
+                };
+
+                var orderStateResult = orderStateProducer.ProduceAsync(
+                    "order-state",
+                    Guid.NewGuid().ToString(),
+                    orderState).Result;
 
                 if (e.Value.Status.Equals("success"))
                 {
@@ -102,11 +121,12 @@ namespace OrderOrchestra.Jobs
 
         public void Run(CancellationToken cancellationToken)
         {
+            using (var orderStateProducer = new Producer<string, OrderState>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<OrderState>()))
             using (var producer = new Producer<string, OrderFailed>(this._producerConfig, new AvroSerializer<string>(), new AvroSerializer<OrderFailed>()))
             using (var consumer = new Consumer<string, ReservedCustomerCredit>(this._consumerConfig, new AvroDeserializer<string>(), new AvroDeserializer<ReservedCustomerCredit>()))
             {
                 // Add Event listeners.
-                consumer.OnMessage += (o, e) => OnReservedCustomerCredit(o, e, producer);
+                consumer.OnMessage += (o, e) => OnReservedCustomerCredit(o, e, producer, orderStateProducer);
                 consumer.OnError += OnError;
                 consumer.OnConsumeError += OnConsumeError;
 
