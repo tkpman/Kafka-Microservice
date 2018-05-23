@@ -16,5 +16,8 @@ namespace OrderQuery.Api.Application.Models
         public double Total { get; set; }
 
         public List<Product> Products { get; set; }
+
+        public string Status { get; set; }
+
     }
 }

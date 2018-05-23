@@ -42,6 +42,7 @@ namespace OrderQuery.Api.Application.Commands
                 Date = x.Date,
                 OrderId = x.OrderId,
                 Total = x.Total,
+                Status = x.Status.ToString(),
                 Products = x.Products?.Select(p => new Models.Product()
                 {
                     ProductId = p.ProductId,
